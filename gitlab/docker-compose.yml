@@ -1,0 +1,43 @@
+services:
+    gitlab:
+      image: 'gitlab/gitlab-ce:latest'
+      container_name: gitlab
+      restart: always
+      environment:
+        GITLAB_OMNIBUS_CONFIG: |
+          external_url 'https://my.gitlab'
+          gitlab_rails['gitlab_shell_ssh_port'] = 3122
+          nginx['listen_port'] = 443
+          nginx['redirect_http_to_https'] = true
+          nginx['ssl_certificate'] = "/etc/ssl/certs/gitlab/server-cert.pem"
+          nginx['ssl_certificate_key'] = "/etc/ssl/certs/gitlab/server-key.pem"
+          registry_external_url 'https://my.gitlab:4567'
+          registry_nginx['enable'] = true
+          registry_nginx['ssl_certificate'] = "/etc/ssl/certs/gitlab/server-cert.pem"
+          registry_nginx['ssl_certificate_key'] = "/etc/ssl/certs/gitlab/server-key.pem"
+          gitlab_rails['initial_root_password'] = 'secret_pass'
+          gitlab_rails['backup_keep_time'] = 172800
+      ports:
+        - '4567:4567'
+        - '443:443'
+        - '3122:22'
+      volumes:
+        - 'config:/etc/gitlab'
+        - 'logs:/var/log/gitlab'
+        - './ssl:/etc/ssl/certs/gitlab'
+        - 'data:/var/opt/gitlab'
+
+    runner:
+      image: 'gitlab/gitlab-runner:latest'
+      container_name: gitlab-runner
+      restart: always
+      volumes:
+        - 'gitlab-runner:/etc/gitlab-runner'
+        - '/var/run/docker.sock:/var/run/docker.sock'
+
+volumes:
+  config:
+  data:
+  logs:
+  gitlab-runner:
+
